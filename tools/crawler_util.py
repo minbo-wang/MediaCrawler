@@ -75,6 +75,10 @@ async def find_qrcode_img_from_canvas(page: Page, canvas_selector: str) -> str:
     return base64_image
 
 
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
+import numpy as np
 def show_qrcode(qr_code) -> None:  # type: ignore
     """parse base64 encode qrcode image and show it"""
     if "," in qr_code:
@@ -86,9 +90,8 @@ def show_qrcode(qr_code) -> None:  # type: ignore
     width, height = image.size
     new_image = Image.new('RGB', (width + 20, height + 20), color=(255, 255, 255))
     new_image.paste(image, (10, 10))
-    draw = ImageDraw.Draw(new_image)
-    draw.rectangle((0, 0, width + 19, height + 19), outline=(0, 0, 0), width=1)
-    new_image.show()
+    new_image.save("qrcode.png")
+    utils.logger.info("scan qrcode ...")
 
 
 def get_user_agent() -> str:

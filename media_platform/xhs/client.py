@@ -97,7 +97,7 @@ class XiaoHongShuClient(AbstractApiClient):
         return_response = kwargs.pop("return_response", False)
 
         async with httpx.AsyncClient(proxies=self.proxies) as client:
-            response = await client.request(method, url, timeout=self.timeout, **kwargs)
+            response = await client.request(method, url, timeout=self.timeout, **kwargs) # use this branch
 
         if response.status_code == 471 or response.status_code == 461:
             # someday someone maybe will bypass captcha

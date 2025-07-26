@@ -77,16 +77,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
             # stealth.min.js is a js script to prevent the website from detecting the crawler.
             await self.browser_context.add_init_script(path="libs/stealth.min.js")
             # add a cookie attribute webId to avoid the appearance of a sliding captcha on the webpage
-            await self.browser_context.add_cookies(
-                [
-                    {
-                        "name": "webId",
-                        "value": "xxx123",  # any value
-                        "domain": ".xiaohongshu.com",
-                        "path": "/",
-                    }
-                ]
-            )
+            # await self.browser_context.add_cookies(
+            #     [
+            #         {
+            #             "name": "webId",
+            #             "value": "xxx123",  # any value
+            #             "domain": ".xiaohongshu.com",
+            #             "path": "/",
+            #         }
+            #     ]
+            # )
             self.context_page = await self.browser_context.new_page()
             await self.context_page.goto(self.index_url)
 
@@ -334,7 +334,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                     note_detail.update(
                         {"xsec_token": xsec_token, "xsec_source": xsec_source}
                     )
-                    return note_detail
+                    return note_detail # return this branch
             except DataFetchError as ex:
                 utils.logger.error(
                     f"[XiaoHongShuCrawler.get_note_detail_async_task] Get note detail error: {ex}"

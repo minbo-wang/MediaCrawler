@@ -15,7 +15,7 @@ KEYWORDS = "编程副业,编程兼职"  # 关键词搜索配置，以英文逗�
 LOGIN_TYPE = "qrcode"  # qrcode or phone or cookie
 COOKIES = ""
 # 具体值参见media_platform.xxx.field下的枚举值，暂时只支持小红书
-SORT_TYPE = "popularity_descending"
+SORT_TYPE = "time_descending"
 # 具体值参见media_platform.xxx.field下的枚举值，暂时只支持抖音
 PUBLISH_TIME_TYPE = 0
 CRAWLER_TYPE = (
@@ -30,7 +30,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 ENABLE_IP_PROXY = False
 
 # 未启用代理时的最大爬取间隔，单位秒（暂时仅对XHS有效）
-CRAWLER_MAX_SLEEP_SEC = 2
+CRAWLER_MAX_SLEEP_SEC = 2 # 30
 
 # 代理IP池数量
 IP_PROXY_POOL_COUNT = 2

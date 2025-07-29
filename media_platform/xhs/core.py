@@ -34,6 +34,11 @@ from .exception import DataFetchError
 from .field import SearchSortType
 from .help import parse_note_info_from_note_url, get_search_id
 from .login import XiaoHongShuLogin
+import time
+import datetime
+import json
+
+from tools.utils import send_url
 
 
 class XiaoHongShuCrawler(AbstractCrawler):
@@ -129,13 +134,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < xhs_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = xhs_limit_count
         start_page = config.START_PAGE
-        for keyword in config.KEYWORDS.split(","):
+        for keyword in config.KEYWORDS:
             source_keyword_var.set(keyword)
             utils.logger.info(
                 f"[XiaoHongShuCrawler.search] Current search keyword: {keyword}"
             )
             page = 1
+            time_exceed = False
             search_id = get_search_id()
+            cache_dir = "output"
+            os.makedirs(cache_dir, exist_ok=True)
             while (
                 page - start_page + 1
             ) * xhs_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
@@ -144,12 +152,14 @@ class XiaoHongShuCrawler(AbstractCrawler):
                     page += 1
                     continue
 
+                if time_exceed:
+                    utils.logger.info(f"[XiaoHongShuCrawler.search] time_exceed 3 hours, break")
+                    break
+
                 try:
                     utils.logger.info(
                         f"[XiaoHongShuCrawler.search] search xhs keyword: {keyword}, page: {page}"
                     )
-                    note_ids: List[str] = []
-                    xsec_tokens: List[str] = []
                     notes_res = await self.xhs_client.get_note_by_keyword(
                         keyword=keyword,
                         search_id=search_id,
@@ -160,35 +170,66 @@ class XiaoHongShuCrawler(AbstractCrawler):
                             else SearchSortType.GENERAL
                         ),
                     )
-                    utils.logger.info(
-                        f"[XiaoHongShuCrawler.search] Search notes res:{notes_res}"
-                    )
+                    # utils.logger.info(
+                    #     f"[XiaoHongShuCrawler.search] Search notes res:{notes_res}"
+                    # )
                     if not notes_res or not notes_res.get("has_more", False):
                         utils.logger.info("No more content!")
                         break
                     semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
-                    task_list = [
-                        self.get_note_detail_async_task(
-                            note_id=post_item.get("id"),
-                            xsec_source=post_item.get("xsec_source"),
-                            xsec_token=post_item.get("xsec_token"),
-                            semaphore=semaphore,
-                        )
-                        for post_item in notes_res.get("items", {})
-                        if post_item.get("model_type") not in ("rec_query", "hot_query")
-                    ]
-                    note_details = await asyncio.gather(*task_list)
-                    for note_detail in note_details:
-                        if note_detail:
-                            await xhs_store.update_xhs_note(note_detail)
-                            await self.get_notice_media(note_detail)
-                            note_ids.append(note_detail.get("note_id"))
-                            xsec_tokens.append(note_detail.get("xsec_token"))
+                    for post_item in notes_res.get("items", {}):
+                        note_id = post_item["id"]
+                        curtime_s = time.time()
+                        date_time = datetime.datetime.fromtimestamp(curtime_s)
+                        parsed_date = date_time.strftime("%Y_%m_%d")
+                        cache_file = f"{cache_dir}/{parsed_date}.json"
+                        ids = set()
+                        if os.path.exists(cache_file):
+                            with open(cache_file, "r") as f:
+                                try:
+                                    ids = set(json.load(f))
+                                except:
+                                    pass
+
+                        if ids and note_id in ids:
+                            continue
+
+                        
+                        if post_item.get("model_type") not in ("rec_query", "hot_query"):
+                            note_detail = await self.get_note_detail_async_task(
+                                note_id=post_item.get("id"),
+                                xsec_source=post_item.get("xsec_source"),
+                                xsec_token=post_item.get("xsec_token"),
+                                semaphore=semaphore,
+                            )
+                            if 'video' in note_detail:
+                                utils.logger.info(
+                                    f"[XiaoHongShuCrawler.search] search skip video note_id: {note_id}"
+                                )
+                                continue
+                            timestamp_s = note_detail['time'] / 1000
+                            
+                            if (curtime_s - timestamp_s) / 60 / 60 > 1.5: # 超过1.5小时的信息不发送
+                                utils.logger.info(
+                                    f"[XiaoHongShuCrawler.search] search exceed 3 hours note_id: {note_id}"
+                                )
+                                time_exceed = True
+                                break 
+
+                            ids.add(note_id)
+                            with open(cache_file, "w") as f:
+                                json.dump(list(ids), f)
+                            
+                            # send url
+                            send_url(note_detail)
+                            utils.logger.info(
+                                f"[XiaoHongShuCrawler.search] search send note_id: {note_id}, page: {page}"
+                            )
+                            
                     page += 1
-                    utils.logger.info(
-                        f"[XiaoHongShuCrawler.search] Note details: {note_details}"
-                    )
-                    await self.batch_get_note_comments(note_ids, xsec_tokens)
+                    # utils.logger.info(
+                    #     f"[XiaoHongShuCrawler.search] Note details: {note_details}"
+                    # )
                 except DataFetchError:
                     utils.logger.error(
                         "[XiaoHongShuCrawler.search] Get note detail error"

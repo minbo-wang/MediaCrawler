@@ -11,7 +11,12 @@
 
 # 基础配置
 PLATFORM = "xhs"
-KEYWORDS = "编程副业,编程兼职"  # 关键词搜索配置，以英文逗号分隔
+KEYWORDS = ["python求助", "python培训", "python辅导"
+            "计算机编程求助", "计算机视觉求助",
+            "毕设求助", "论文求助", "毕业设计求助"
+            "人工智能培训", "人工智能辅导",
+            "论文"
+            ]  # 关键词搜索配置，以英文逗号分隔
 LOGIN_TYPE = "qrcode"  # qrcode or phone or cookie
 COOKIES = ""
 # 具体值参见media_platform.xxx.field下的枚举值，暂时只支持小红书
@@ -30,7 +35,10 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 ENABLE_IP_PROXY = False
 
 # 未启用代理时的最大爬取间隔，单位秒（暂时仅对XHS有效）
-CRAWLER_MAX_SLEEP_SEC = 2 # 30
+CRAWLER_MAX_SLEEP_SEC = 10 # 30
+
+# ROUND间隔3分钟继续爬数据
+ROUND_INTERVAL_SLEEP_SEC = 3 * 60
 
 # 代理IP池数量
 IP_PROXY_POOL_COUNT = 2

@@ -615,7 +615,9 @@ class XiaoHongShuClient(AbstractApiClient):
 
             if state != "{}":
                 note_dict = transform_json_keys(state)
-                return note_dict["note"]["note_detail_map"][note_id]["note"]
+                rt = note_dict["note"]["note_detail_map"][note_id]["note"]
+                rt["url"] = url
+                return rt
             return {}
 
         try:

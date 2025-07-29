@@ -26,8 +26,7 @@ async def parse_cmd():
                         choices=["search", "detail", "creator"], default=config.CRAWLER_TYPE)
     parser.add_argument('--start', type=int,
                         help='number of start page', default=config.START_PAGE)
-    parser.add_argument('--keywords', type=str,
-                        help='please input keywords', default=config.KEYWORDS)
+    parser.add_argument('--keywords', nargs="+", type=str, default=config.KEYWORDS, help='please input keywords')  # 接收多个整数
     parser.add_argument('--get_comment', type=str2bool,
                         help='''whether to crawl level one comment, supported values case insensitive ('yes', 'true', 't', 'y', '1', 'no', 'false', 'f', 'n', '0')''', default=config.ENABLE_GET_COMMENTS)
     parser.add_argument('--get_sub_comment', type=str2bool,

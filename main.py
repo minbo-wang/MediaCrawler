@@ -64,6 +64,8 @@ async def main():
 if __name__ == '__main__':
     try:
         # asyncio.run(main())
-        asyncio.get_event_loop().run_until_complete(main())
+        while True:
+            asyncio.get_event_loop().run_until_complete(main())
+            time.sleep(config.ROUND_INTERVAL_SLEEP_SEC)
     except KeyboardInterrupt:
         sys.exit()
